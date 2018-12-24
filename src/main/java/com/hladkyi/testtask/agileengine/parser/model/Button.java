@@ -1,17 +1,13 @@
 package com.hladkyi.testtask.agileengine.parser.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import org.jsoup.select.Elements;
 import org.w3c.dom.css.RGBColor;
 
-//@Data
-//@AllArgsConstructor
 public class Button {
 
-    RGBColor color;
-    String text;
-    Elements ancestors;
+    private RGBColor color;
+    private String text;
+    private Elements ancestors;
 
 
     public Button(RGBColor color, String text, Elements ancestors) {
@@ -51,4 +47,5 @@ public class Button {
                 ", text='" + text + '\'' +
                 '}';
     }
+
 }

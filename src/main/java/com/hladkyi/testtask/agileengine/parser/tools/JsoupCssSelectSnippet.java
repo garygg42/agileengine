@@ -51,7 +51,7 @@ public class JsoupCssSelectSnippet {
         );
     }
 
-    private static Optional<Elements> findElementsByQuery(File htmlFile, String cssQuery) {
+    public static Optional<Elements> findElementsByQuery(File htmlFile, String cssQuery) {
         try {
             Document doc = Jsoup.parse(
                     htmlFile,

@@ -17,24 +17,6 @@ public class JsoupFindByIdSnippet {
 
     private static String CHARSET_NAME = "utf8";
 
-    public static void main(String[] args) {
-
-        // Jsoup requires an absolute file path to resolve possible relative paths in HTML,
-        // so providing InputStream through classpath resources is not a case
-        String resourcePath = "./samples/startbootstrap-freelancer-gh-pages-cut.html";
-        String targetElementId = "sendMessageButton";
-
-        Optional<Element> buttonOpt = findElementById(new File(resourcePath), targetElementId);
-
-        Optional<String> stringifiedAttributesOpt = buttonOpt.map(button ->
-                button.attributes().asList().stream()
-                        .map(attr -> attr.getKey() + " = " + attr.getValue())
-                        .collect(Collectors.joining(", "))
-        );
-
-        stringifiedAttributesOpt.ifPresent(attrs -> LOGGER.info("Target element attrs: [{}]", attrs));
-    }
-
     public static Optional<Element> findElementById(File htmlFile, String targetElementId) {
         try {
             Document doc = Jsoup.parse(
