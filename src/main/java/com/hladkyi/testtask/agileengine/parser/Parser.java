@@ -39,7 +39,9 @@ public class Parser {
 
         Button originalButton = getOriginalButton(originalPageFile, styles);
 
-        Elements elementsFromModified = JsoupCssSelectSnippet.findElementsByQuery(modifiedPageFile, "a[class*=\"btn\"]").orElseThrow(IllegalStateException::new);
+        Elements elementsFromModified = JsoupCssSelectSnippet
+                .findElementsByQuery(modifiedPageFile, "a[class*=\"btn\"]")
+                .orElseThrow(IllegalStateException::new);
 
         Button foundButton = elementsFromModified.stream()
                 .map(element -> {
@@ -59,6 +61,8 @@ public class Parser {
                 .sorted((o1, o2) -> Double.compare(o2.getKey(), o1.getKey()))
                 .map(AbstractMap.SimpleEntry::getValue)
                 .findFirst().orElseThrow(IllegalStateException::new);
+
+        System.out.println(foundButton.getAncestors().get(0).cssSelector());
     }
 
     private static Button getOriginalButton(File originalPageFile, Map<String, CSSStyleDeclaration> styles) {
@@ -75,7 +79,8 @@ public class Parser {
     private static RGBColor getButtonColor(Map<String, CSSStyleDeclaration> styles, Element buttonElement) {
         Set<String> buttonClassNames = buttonElement.classNames();
         return buttonClassNames.stream()
-                .map(className -> ((CSSPrimitiveValue) styles.get("." + className).getPropertyCSSValue("background-color")))
+                .map(className -> ((CSSPrimitiveValue) styles.get("." + className)
+                        .getPropertyCSSValue("background-color")))
                 .filter(Objects::nonNull)
                 .map(CSSPrimitiveValue::getRGBColorValue)
                 .filter(Objects::nonNull)
