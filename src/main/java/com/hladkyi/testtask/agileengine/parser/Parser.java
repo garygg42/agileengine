@@ -31,7 +31,6 @@ public class Parser {
         Map<String, CSSStyleDeclaration> styles = getStyles(originalPagePath);
 
         Button originalButton = getOriginalButton(originalPageFile, styles);
-        System.out.println(originalButton);
     }
 
     private static Button getOriginalButton(File originalPageFile, Map<String, CSSStyleDeclaration> styles) {
@@ -39,17 +38,20 @@ public class Parser {
                 .findElementById(originalPageFile, "make-everything-ok-button")
                 .orElseThrow(() -> new IllegalStateException(""));
 
-        Set<String> originalButtonClassNames = originalButtonElement.classNames();
         String originalButtonText = originalButtonElement.text();
+        RGBColor buttonColor = getButtonColor(styles, originalButtonElement);
 
-        RGBColor buttonColor = originalButtonClassNames.stream()
+        return new Button(buttonColor, originalButtonText, originalButtonElement.parents());
+    }
+
+    private static RGBColor getButtonColor(Map<String, CSSStyleDeclaration> styles, Element buttonElement) {
+        Set<String> buttonClassNames = buttonElement.classNames();
+        return buttonClassNames.stream()
                 .map(className -> ((CSSPrimitiveValue) styles.get("." + className).getPropertyCSSValue("background-color")))
                 .filter(Objects::nonNull)
                 .map(CSSPrimitiveValue::getRGBColorValue)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(LinkedList::new)).getLast();
-
-        return new Button(buttonColor, originalButtonText, originalButtonElement.parents());
     }
 
     //    @SneakyThrows
