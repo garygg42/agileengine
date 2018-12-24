@@ -1,10 +1,10 @@
 package com.hladkyi.testtask.agileengine.parser;
 
+import com.hladkyi.testtask.agileengine.parser.model.Button;
 import com.hladkyi.testtask.agileengine.parser.tools.JsoupFindByIdSnippet;
 import com.steadystate.css.parser.CSSOMParser;
 import com.steadystate.css.parser.SACParserCSS3;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -17,9 +17,8 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class Parser {
 
@@ -29,21 +28,37 @@ public class Parser {
         Path originalPagePath = Paths.get(originalPagePathArg);
         File originalPageFile = originalPagePath.toFile();
 
-        Element originalButton = JsoupFindByIdSnippet
+        Map<String, CSSStyleDeclaration> styles = getStyles(originalPagePath);
+
+        Button originalButton = getOriginalButton(originalPageFile, styles);
+        System.out.println(originalButton);
+    }
+
+    private static Button getOriginalButton(File originalPageFile, Map<String, CSSStyleDeclaration> styles) {
+        Element originalButtonElement = JsoupFindByIdSnippet
                 .findElementById(originalPageFile, "make-everything-ok-button")
                 .orElseThrow(() -> new IllegalStateException(""));
 
-        Attributes attributes = originalButton.attributes();
-        Set<String> classNames = originalButton.classNames();
-        String text = originalButton.text();
+        Set<String> originalButtonClassNames = originalButtonElement.classNames();
+        String originalButtonText = originalButtonElement.text();
 
-        Document doc = Jsoup.parse(
-                originalPageFile,
-                "utf8",
-                originalPageFile.getAbsolutePath());
+        RGBColor buttonColor = originalButtonClassNames.stream()
+                .map(className -> ((CSSPrimitiveValue) styles.get("." + className).getPropertyCSSValue("background-color")))
+                .filter(Objects::nonNull)
+                .map(CSSPrimitiveValue::getRGBColorValue)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedList::new)).getLast();
+
+        return new Button(buttonColor, originalButtonText, originalButtonElement.parents());
+    }
+
+    //    @SneakyThrows
+    private static Map<String, CSSStyleDeclaration> getStyles(Path originalPagePath) throws IOException {
+        File originalPageFile = originalPagePath.toFile();
+        Document doc = Jsoup.parse(originalPageFile, "utf8", originalPageFile.getAbsolutePath());
 
         Elements links = doc.head().getElementsByTag("link");
-        String styles = StreamSupport.stream(links.spliterator(), false)
+        String allCss = links.stream()
                 .map(link -> link.attr("href"))
                 .map(cssPath -> {
                     try {
@@ -51,31 +66,25 @@ public class Parser {
                     } catch (IOException e) {
                         throw new IllegalStateException(e);
                     }
-                }).collect(Collectors.joining());
+                })
+                .collect(Collectors.joining());
 
 
-        InputSource entireSource = new InputSource(new StringReader(styles));
+        InputSource entireSource = new InputSource(new StringReader(allCss));
         CSSOMParser entireParser = new CSSOMParser(new SACParserCSS3());
         CSSStyleSheet sheet = entireParser.parseStyleSheet(entireSource, null, null);
         CSSRuleList ruleList = sheet.getCssRules();
 
-        for (int i = 0; i < ruleList.getLength(); i++)
-        {
-            CSSRule rule = ruleList.item(i);
-            if (rule instanceof CSSStyleRule)
-            {
-                CSSStyleRule styleRule=(CSSStyleRule)rule;
-                System.out.println("selector:" + i + ": " + styleRule.getSelectorText());
-                CSSStyleDeclaration styleDeclaration = styleRule.getStyle();
+        Map<String, CSSStyleDeclaration> styles = new HashMap<>();
 
-                for (int j = 0; j < styleDeclaration.getLength(); j++)
-                {
-                    String property = styleDeclaration.item(j);
-                    System.out.println("property: " + property);
-                    System.out.println("value: " + styleDeclaration.getPropertyCSSValue(property).getCssText());
-                    System.out.println("priority: " + styleDeclaration.getPropertyPriority(property));
-                }
+        for (int i = 0; i < ruleList.getLength(); i++) {
+            CSSRule rule = ruleList.item(i);
+            if (rule instanceof CSSStyleRule) {
+                CSSStyleRule styleRule = (CSSStyleRule) rule;
+                CSSStyleDeclaration styleDeclaration = styleRule.getStyle();
+                styles.put(styleRule.getSelectorText(), styleDeclaration);
             }
         }
+        return styles;
     }
 }
