@@ -29,6 +29,11 @@ public class Parser {
     public static void main(String[] args) throws IOException {
         String originalPagePathArg = args[0];
         String modifiedPagePathArg = args[1];
+
+        System.out.println(findModifiedButtonPath(originalPagePathArg, modifiedPagePathArg));
+    }
+
+    public static String findModifiedButtonPath(String originalPagePathArg, String modifiedPagePathArg) {
         Path originalPagePath = Paths.get(originalPagePathArg);
         File originalPageFile = originalPagePath.toFile();
         Path modifiedPagePath = Paths.get(modifiedPagePathArg);
@@ -47,7 +52,7 @@ public class Parser {
                     RGBColor buttonColor = getButtonColor(styles, element);
                     return new Button(buttonColor, buttonText, element.parents());
                 })
-                .filter(candidate -> Objects.equals(candidate.getColor(), originalMakeOkButton.getColor())) // Should be the same colour as original button
+                .filter(candidate -> Objects.equals(candidate.getColor().toString(), originalMakeOkButton.getColor().toString())) // Should be the same colour as original button
                 .map(element -> {
                     String originalSelector = originalMakeOkButton.getAncestors().get(0).cssSelector();
                     String modifiedSelector = element.getAncestors().get(0).cssSelector();
@@ -61,7 +66,7 @@ public class Parser {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Could not find a button that would be similar to Make Everything OK"));
 
-        System.out.println(foundMakeOkButtonFromModifiedPage.getAncestors().get(0).cssSelector());
+        return foundMakeOkButtonFromModifiedPage.getAncestors().get(0).cssSelector();
     }
 
     private static Button getOriginalButton(File originalPageFile, Map<String, CSSStyleDeclaration> styles) {
